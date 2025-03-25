@@ -1,17 +1,25 @@
-import { atom } from "recoil";
+import { atom, AtomEffect } from "recoil";
 
-const localStorageEffect =
-  (key: string) =>
-  ({ setSelf, onSet }: any) => {
+function localStorageEffect<T>(key: string): AtomEffect<T> {
+  return ({ setSelf, onSet }) => {
     const savedValue = localStorage.getItem(key);
     if (savedValue != null) {
-      setSelf(JSON.parse(savedValue));
+      try {
+        setSelf(JSON.parse(savedValue));
+      } catch (error) {
+        console.error(`${key}에 저장된 값이 없거나 오류가 있습니다.`);
+      }
     }
 
-    onSet((newValue: string[]) => {
-      localStorage.setItem(key, JSON.stringify(newValue));
+    onSet((newValue, _, isReset) => {
+      if (isReset) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, JSON.stringify(newValue));
+      }
     });
   };
+}
 
 export const wishListState = atom<string[]>({
     key: "wishListState",
